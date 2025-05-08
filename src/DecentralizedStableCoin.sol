@@ -25,6 +25,7 @@ contract DecentralizedStableCoin is ERC20Burnable{
             revert DecentralizedStableCoin__BurnAmountExceedsBalance();
         }
         super.burn(_amount);
+        
     }
 
     function mint(address _to, uint256 _amount) external returns (bool) {
