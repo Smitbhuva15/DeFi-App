@@ -9,7 +9,7 @@ import {AggregatorV3Interface} from "lib/chainlink-brownie-contracts/contracts/s
 contract DSCEngine {
 
 
-    
+
     ///////////////////////////////////////         errors       ///////////////////////////////////////////////
 
     error DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
@@ -19,7 +19,11 @@ contract DSCEngine {
     error DSCEngine__BreaksHealthFactor(uint256 healthFactorValue);
     error DSCEngine__MintFailed();
 
+
+
     DecentralizedStableCoin private immutable i_dsc;
+
+
 
     uint256 private constant LIQUIDATION_THRESHOLD = 50; // This means you need to be 200% over-collateralized
     uint256 private constant LIQUIDATION_BONUS = 10; //  meThisans you get assets at a 10% discount when liquidating
@@ -80,6 +84,8 @@ contract DSCEngine {
             s_priceFeeds[tokenAddresses[i]] = priceFeedAddresses[i];
             s_collateralTokens.push(tokenAddresses[i]);
         }
+
+        //// for set the owner 
         i_dsc = DecentralizedStableCoin(dscAddress);
     }
 
@@ -137,7 +143,7 @@ contract DSCEngine {
 
     ///////////////////////////////////////////    internal    ///////////////////////////////////////////
 
-    function revertIfHealthFactorIsBroken(address user) internal {
+    function revertIfHealthFactorIsBroken(address user) internal view {
         uint256 userHealthFactor = _healthFactor(user);
 
         if (userHealthFactor < MIN_HEALTH_FACTOR) {
