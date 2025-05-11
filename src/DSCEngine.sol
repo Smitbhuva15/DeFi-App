@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
-import {AggregatorV3Interface} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract DSCEngine {
 
@@ -85,7 +85,7 @@ contract DSCEngine {
             s_collateralTokens.push(tokenAddresses[i]);
         }
 
-        //// for set the owner 
+        //// for set the owner
         i_dsc = DecentralizedStableCoin(dscAddress);
     }
 
