@@ -177,7 +177,7 @@ contract DSCEngine {
     function _getUsdValue(
         address token,
         uint256 amount
-    ) private view returns (uint256) {
+    ) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(
             s_priceFeeds[token]
         );
