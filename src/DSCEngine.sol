@@ -171,6 +171,8 @@ contract DSCEngine {
         ) = _getAccountInformation(user);
         uint256 collateralAdjustedForThreshold = (collateralValueInUsd *
             LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
+
+            
         return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
     }
 
