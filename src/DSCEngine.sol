@@ -91,11 +91,18 @@ contract DSCEngine {
 
     /////////////////////////////          external       ///////////////////////////////////////////
 
-    function depositCollateralAndMintDsc(
+    function depositCollateralAndMintDsc( address tokenCollateralAddress,
+        uint256 amountCollateral,
+        uint256 amountDscToMint) external{
+           depositCollateral(tokenCollateralAddress,amountCollateral)
+           mintDsc(amountDscToMint)
+    }
+
+    function depositCollateral(
         address tokenCollateralAddress,
         uint256 amountCollateral
     )
-        external
+        public
         moreThanZero(amountCollateral)
         isAllowedToken(tokenCollateralAddress)
     {
