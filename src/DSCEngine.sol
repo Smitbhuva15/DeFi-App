@@ -94,8 +94,8 @@ contract DSCEngine {
     function depositCollateralAndMintDsc( address tokenCollateralAddress,
         uint256 amountCollateral,
         uint256 amountDscToMint) external{
-           depositCollateral(tokenCollateralAddress,amountCollateral)
-           mintDsc(amountDscToMint)
+           depositCollateral(tokenCollateralAddress,amountCollateral);
+           mintDsc(amountDscToMint);
     }
 
     function depositCollateral(
