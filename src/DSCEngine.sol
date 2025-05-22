@@ -97,6 +97,9 @@ contract DSCEngine {
         uint256 amountCollateral,
         uint256 amountDscToMint) external{
            depositCollateral(tokenCollateralAddress,amountCollateral);
+
+
+           
            mintDsc(amountDscToMint);
     }
 
