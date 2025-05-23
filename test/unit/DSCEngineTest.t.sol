@@ -23,6 +23,8 @@ contract DSCEngineTest is Test{
 
     function setUp() external {
          DeployDsc deployer = new DeployDsc();
+
+         
          (dsc, dsce, helperConfig) = deployer.run();
 
         (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, deployerKey) = helperConfig.activeNetworkConfig();
