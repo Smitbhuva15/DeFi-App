@@ -52,6 +52,12 @@ contract DSCEngine {
         uint256 indexed amount
     );
 
+    event CollateralRedeem(
+        address indexed user,
+        address indexed token,
+        uint256 indexed amount
+    );
+
     //////////////////////////////////////////////  modifier   ///////////////////////////////////////////
 
     modifier moreThanZero(uint256 amount) {
@@ -143,13 +149,33 @@ contract DSCEngine {
         }
     }
 
-    function redeemCollateralForDsc() external {}
+    function redeemCollateralForDsc(address redeemCollateralAddress,uint256 amountToRedeemCollatral,uint256 amountDscToBurn) external {
+        burnDsc(amountDscToBurn);
+        redeemCollateral(redeemCollateralAddress, amountToRedeemCollatral);
+    }
 
-    function redeemCollateral() external {}
+    
+  //  after Redeem HealthFactor must be grether than zero
+    function redeemCollateral(address redeemCollateralAddress,uint256 amountToRedeemCollatral) public moreThanZero(amountToRedeemCollatral){
+
+        s_collateralDeposited[msg.sender][redeemCollateralAddress]-=amountToRedeemCollatral;
+        emit CollateralRedeem(msg.sender,redeemCollateralAddress,amountToRedeemCollatral);
+
+        (bool success)=IERC20(redeemCollateralAddress).transfer(msg.sender, amountToRedeemCollatral);
+        if(!success){
+            revert DSCEngine__TransferFailed();
+        }
+
+        revertIfHealthFactorIsBroken(msg.sender);
+
+    }
 
    
 
-    function burnDsc() external {}
+    function burnDsc(uint256 amountDscToBurn) public moreThanZero(amountDscToBurn){
+          i_dsc.burn(amountDscToBurn);
+          revertIfHealthFactorIsBroken(msg.sender);  // never possible
+    }
 
     function liquidate() external {}
 
