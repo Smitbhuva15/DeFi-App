@@ -46,11 +46,19 @@ contract DSCEngine {
         uint256 indexed amount
     );
 
-    event CollateralRedeem(
-        address indexed user,
-        address indexed token,
-        uint256 indexed amount
-    );
+    // event CollateralRedeem(
+    //     address indexed user,
+    //     address indexed token,
+    //     uint256 indexed amount
+    // );
+
+    event CollateralRedeemed(
+        address indexed redeemFrom,
+        address indexed redeemTo,
+        address token,
+        uint256 amount
+    ); 
+    // if redeemFrom != redeemedTo, then it was liquidated
 
     //////////////////////////////////////////////  modifier   ///////////////////////////////////////////
 
@@ -150,27 +158,13 @@ contract DSCEngine {
         redeemCollateral(redeemCollateralAddress, amountToRedeemCollatral);
     }
 
-    //  after Redeem HealthFactor must be grether than zero
+    //  after Redeem HealthFactor must be grether than one
     function redeemCollateral(
         address redeemCollateralAddress,
         uint256 amountToRedeemCollatral
     ) public moreThanZero(amountToRedeemCollatral) {
-        s_collateralDeposited[msg.sender][
-            redeemCollateralAddress
-        ] -= amountToRedeemCollatral;
-        emit CollateralRedeem(
-            msg.sender,
-            redeemCollateralAddress,
-            amountToRedeemCollatral
-        );
-
-        bool success = IERC20(redeemCollateralAddress).transfer(
-            msg.sender,
-            amountToRedeemCollatral
-        );
-        if (!success) {
-            revert DSCEngine__TransferFailed();
-        }
+      
+       _redeemCollateral(msg.sender,msg.sender,redeemCollateralAddress,amountToRedeemCollatral);
 
         revertIfHealthFactorIsBroken(msg.sender);
     }
@@ -183,7 +177,7 @@ contract DSCEngine {
     }
 
     function liquidate(
-        address collateral,
+        address collateralAddress,
         address user,
         uint256 debtToCover
     ) external moreThanZero(debtToCover) {
@@ -193,15 +187,20 @@ contract DSCEngine {
             revert DSCEngine__HealthFactorOk();
         }
 
-         ///  here token amount means eth and btc  ....
-         // this tokenAmountFromDebtCovered given to liquidator and also provide 10% bouns....
+        ///  here token amount means eth and btc  ....
+        // this tokenAmountFromDebtCovered given to liquidator and also provide 10% bouns....
 
-    uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);  
+        uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(
+            collateralAddress,
+            debtToCover
+        );
 
-    uint256 bounscollateral=(tokenAmountFromDebtCovered*LIQUIDATION_BONUS)/ LIQUIDATION_PRECISION;
+        uint256 bounscollateral = (tokenAmountFromDebtCovered *
+            LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
 
-    uint256 totalCollateral=tokenAmountFromDebtCovered+bounscollateral;
-    
+        uint256 totalCollateralWithBouns = tokenAmountFromDebtCovered + bounscollateral;
+
+        _redeemCollateral(user,msg.sender,collateralAddress,totalCollateralWithBouns);
     }
 
     function getMinHealthFactor() external {}
@@ -217,6 +216,29 @@ contract DSCEngine {
     }
 
     ///////////////////////////////////////// Private & Internal View & Pure Functions  ///////////////////////////////////////////
+
+    function _redeemCollateral(
+        address from,
+        address to,
+        address redeemCollateralAddress,
+        uint256 amountTORedeem
+    ) internal {
+        s_collateralDeposited[from][redeemCollateralAddress] -= amountTORedeem;
+        emit CollateralRedeemed(
+            from,
+            to,
+            redeemCollateralAddress,
+            amountTORedeem
+        );
+
+        bool success = IERC20(redeemCollateralAddress).transfer(
+            to,
+            amountTORedeem
+        );
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+    }
 
     function _getAccountInformation(
         address user
@@ -250,7 +272,6 @@ contract DSCEngine {
             s_priceFeeds[token]
         );
         (, int256 price, , , ) = priceFeed.latestRoundData();
-
 
         // $1000 USD Debt
         // 1 ETH = 2000 USD
