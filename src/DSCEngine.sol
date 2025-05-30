@@ -7,9 +7,6 @@ import {DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract DSCEngine {
-
-
-
     //////////////////////////////////////         errors       ///////////////////////////////////////////////
 
     error DSCEngine__TokenAddressesAndPriceFeedAddressesAmountsDontMatch();
@@ -18,12 +15,9 @@ contract DSCEngine {
     error DSCEngine__TransferFailed();
     error DSCEngine__BreaksHealthFactor(uint256 healthFactorValue);
     error DSCEngine__MintFailed();
-
-
+    error DSCEngine__HealthFactorOk();
 
     DecentralizedStableCoin private immutable i_dsc;
-
-
 
     uint256 private constant LIQUIDATION_THRESHOLD = 50; // This means you need to be 200% over-collateralized
     uint256 private constant LIQUIDATION_BONUS = 10; //  meThisans you get assets at a 10% discount when liquidating
@@ -68,12 +62,8 @@ contract DSCEngine {
     }
 
     modifier isAllowedToken(address token) {
-
-        
         if (s_priceFeeds[token] == address(0)) {
-            
             revert DSCEngine__TokenNotAllowed(token);
-
         }
         _;
     }
@@ -101,7 +91,7 @@ contract DSCEngine {
 
     /////////////////////////////          external       ///////////////////////////////////////////
 
-     function mintDsc(
+    function mintDsc(
         uint256 amountDscToMint
     ) public moreThanZero(amountDscToMint) {
         s_DSCMinted[msg.sender] += amountDscToMint;
@@ -115,12 +105,14 @@ contract DSCEngine {
         }
     }
 
-    function depositCollateralAndMintDsc( address tokenCollateralAddress,
+    function depositCollateralAndMintDsc(
+        address tokenCollateralAddress,
         uint256 amountCollateral,
-        uint256 amountDscToMint) external{
-           depositCollateral(tokenCollateralAddress,amountCollateral);
-           
-           mintDsc(amountDscToMint);
+        uint256 amountDscToMint
+    ) external {
+        depositCollateral(tokenCollateralAddress, amountCollateral);
+
+        mintDsc(amountDscToMint);
     }
 
     function depositCollateral(
@@ -149,35 +141,68 @@ contract DSCEngine {
         }
     }
 
-    function redeemCollateralForDsc(address redeemCollateralAddress,uint256 amountToRedeemCollatral,uint256 amountDscToBurn) external {
+    function redeemCollateralForDsc(
+        address redeemCollateralAddress,
+        uint256 amountToRedeemCollatral,
+        uint256 amountDscToBurn
+    ) external {
         burnDsc(amountDscToBurn);
         redeemCollateral(redeemCollateralAddress, amountToRedeemCollatral);
     }
 
-    
-  //  after Redeem HealthFactor must be grether than zero
-    function redeemCollateral(address redeemCollateralAddress,uint256 amountToRedeemCollatral) public moreThanZero(amountToRedeemCollatral){
+    //  after Redeem HealthFactor must be grether than zero
+    function redeemCollateral(
+        address redeemCollateralAddress,
+        uint256 amountToRedeemCollatral
+    ) public moreThanZero(amountToRedeemCollatral) {
+        s_collateralDeposited[msg.sender][
+            redeemCollateralAddress
+        ] -= amountToRedeemCollatral;
+        emit CollateralRedeem(
+            msg.sender,
+            redeemCollateralAddress,
+            amountToRedeemCollatral
+        );
 
-        s_collateralDeposited[msg.sender][redeemCollateralAddress]-=amountToRedeemCollatral;
-        emit CollateralRedeem(msg.sender,redeemCollateralAddress,amountToRedeemCollatral);
-
-        (bool success)=IERC20(redeemCollateralAddress).transfer(msg.sender, amountToRedeemCollatral);
-        if(!success){
+        bool success = IERC20(redeemCollateralAddress).transfer(
+            msg.sender,
+            amountToRedeemCollatral
+        );
+        if (!success) {
             revert DSCEngine__TransferFailed();
         }
 
         revertIfHealthFactorIsBroken(msg.sender);
-
     }
 
-   
-
-    function burnDsc(uint256 amountDscToBurn) public moreThanZero(amountDscToBurn){
-          i_dsc.burn(amountDscToBurn);
-          revertIfHealthFactorIsBroken(msg.sender);  // never possible
+    function burnDsc(
+        uint256 amountDscToBurn
+    ) public moreThanZero(amountDscToBurn) {
+        i_dsc.burn(amountDscToBurn);
+        revertIfHealthFactorIsBroken(msg.sender); // never possible
     }
 
-    function liquidate() external {}
+    function liquidate(
+        address collateral,
+        address user,
+        uint256 debtToCover
+    ) external moreThanZero(debtToCover) {
+        uint256 startingUserhealthFactor = _healthFactor(user);
+
+        if (startingUserhealthFactor >= MIN_HEALTH_FACTOR) {
+            revert DSCEngine__HealthFactorOk();
+        }
+
+         ///  here token amount means eth and btc  ....
+         // this tokenAmountFromDebtCovered given to liquidator and also provide 10% bouns....
+
+    uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);  
+
+    uint256 bounscollateral=(tokenAmountFromDebtCovered*LIQUIDATION_BONUS)/ LIQUIDATION_PRECISION;
+
+    uint256 totalCollateral=tokenAmountFromDebtCovered+bounscollateral;
+    
+    }
 
     function getMinHealthFactor() external {}
 
@@ -212,8 +237,29 @@ contract DSCEngine {
         uint256 collateralAdjustedForThreshold = (collateralValueInUsd *
             LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
 
-            
         return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
+    }
+
+    ///////////////////////////////////////////  public view  function  ///////////////////////////////////////////
+
+    function getTokenAmountFromUsd(
+        address token,
+        uint256 usdAmountInWei
+    ) public view isAllowedToken(token) returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
+            s_priceFeeds[token]
+        );
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+
+
+        // $1000 USD Debt
+        // 1 ETH = 2000 USD
+        // The returned value from Chainlink will be 2000 * 1e8
+        // Most USD pairs have 8 decimals, so we will just pretend they all do
+        // 1000 * 1e18/2000e8 * 1e10
+
+        return ((usdAmountInWei * PRECISION) /
+            (uint256(price) * ADDITIONAL_FEED_PRECISION));
     }
 
     function _getUsdValue(
@@ -221,7 +267,6 @@ contract DSCEngine {
         uint256 amount
     ) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(
-            
             s_priceFeeds[token]
         );
         (, int256 price, , , ) = priceFeed.latestRoundData();
@@ -229,8 +274,6 @@ contract DSCEngine {
         return
             ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
     }
-
-    ///////////////////////////////////////////  public view  function  ///////////////////////////////////////////
 
     function getAccountCollateralValue(
         address user
