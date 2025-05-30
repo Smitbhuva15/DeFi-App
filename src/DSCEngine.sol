@@ -172,7 +172,7 @@ contract DSCEngine {
     function burnDsc(
         uint256 amountDscToBurn
     ) public moreThanZero(amountDscToBurn) {
-        i_dsc.burn(amountDscToBurn);
+        _burnDsc(amountDscToBurn,msg.sender,msg.sender);
         revertIfHealthFactorIsBroken(msg.sender); // never possible
     }
 
@@ -201,6 +201,8 @@ contract DSCEngine {
         uint256 totalCollateralWithBouns = tokenAmountFromDebtCovered + bounscollateral;
 
         _redeemCollateral(user,msg.sender,collateralAddress,totalCollateralWithBouns);
+
+        _burnDsc(debtToCover, user,msg.sender);
     }
 
     function getMinHealthFactor() external {}
@@ -214,6 +216,8 @@ contract DSCEngine {
             revert DSCEngine__BreaksHealthFactor(userHealthFactor);
         }
     }
+
+
 
     ///////////////////////////////////////// Private & Internal View & Pure Functions  ///////////////////////////////////////////
 
@@ -238,6 +242,18 @@ contract DSCEngine {
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
+    }
+
+    function _burnDsc(uint256 amountToBurnDsc,address onBehalfOf, address dscFromThisUserAccount) internal {
+        s_DSCMinted[onBehalfOf]-=amountToBurnDsc;
+
+        (bool success)=i_dsc.transferFrom(dscFromThisUserAccount,address(this),amountToBurnDsc);
+
+        if(!success){
+            revert DSCEngine__TransferFailed();
+        }
+
+        i_dsc.burn(amountToBurnDsc);
     }
 
     function _getAccountInformation(
