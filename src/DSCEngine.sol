@@ -16,6 +16,8 @@ contract DSCEngine {
     error DSCEngine__BreaksHealthFactor(uint256 healthFactorValue);
     error DSCEngine__MintFailed();
     error DSCEngine__HealthFactorOk();
+    error DSCEngine__HealthFactorNotImproved();
+    
 
     DecentralizedStableCoin private immutable i_dsc;
 
@@ -198,11 +200,21 @@ contract DSCEngine {
         uint256 bounscollateral = (tokenAmountFromDebtCovered *
             LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
 
-        uint256 totalCollateralWithBouns = tokenAmountFromDebtCovered + bounscollateral;
+        uint256 totalCollateralWithBonus = tokenAmountFromDebtCovered + bounscollateral;
 
-        _redeemCollateral(user,msg.sender,collateralAddress,totalCollateralWithBouns);
+        _redeemCollateral(user,msg.sender,collateralAddress,totalCollateralWithBonus);
 
         _burnDsc(debtToCover, user,msg.sender);
+
+        uint256 endingUserhealthFactor = _healthFactor(user);
+
+        if(endingUserhealthFactor<=startingUserhealthFactor){
+            revert DSCEngine__HealthFactorNotImproved();
+
+        }
+
+        revertIfHealthFactorIsBroken(msg.sender);
+
     }
 
     function getMinHealthFactor() external {}
