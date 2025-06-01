@@ -71,16 +71,16 @@ contract DSCEngineTest is Test {
         assertEq(usdValue, expectedUsd);
     }
 
-    function testgetTokenAmountFromUsd() public view{
-        uint256 usdAmountInWei =1000e18;  //pass 1000 usd --->dsc coin   /// 1 usd  == 1e18 represent usd
-        uint256 expectedAnswer=0.5 ether;
+    function testgetTokenAmountFromUsd() public view {
+        uint256 usdAmountInWei = 1000e18; //pass 1000 usd --->dsc coin   /// 1 usd  == 1e18 represent usd
+        uint256 expectedAnswer = 0.5 ether;
 
-        uint256 realAnswer=dscengine.getTokenAmountFromUsd(weth, usdAmountInWei);
+        uint256 realAnswer = dscengine.getTokenAmountFromUsd(
+            weth,
+            usdAmountInWei
+        );
         assertEq(realAnswer, expectedAnswer);
-
     }
-
-     
 
     ////////////////////////////////////////////////    DepositeCollateral Tests    //////////////////////////////////////////////////
 
@@ -93,4 +93,42 @@ contract DSCEngineTest is Test {
 
         vm.stopPrank();
     }
+
+    function testRevertsWithUnapprovedCollateral() public {
+        ERC20Mock randToken = new ERC20Mock(
+            "RAN",
+            "RAN",
+            USER,
+            amountCollateral
+        );
+        vm.startPrank(USER);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                DSCEngine.DSCEngine__TokenNotAllowed.selector,
+                address(randToken)
+            )
+        );
+        dscengine.depositCollateral(address(randToken), amountCollateral);
+        vm.stopPrank();
+    }
+
+    modifier depositeCollateral() {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dscengine), amountCollateral);
+        dscengine.depositCollateral(weth, amountCollateral);
+        vm.stopPrank();
+        _;
+    }
+
+    function testDepositCollateralandGetAccountInfo () depositeCollateral public{
+    (uint256 totalDscMinted, uint256 collateralValueInUsd) = dscengine.getAccountInfo(USER);
+     uint256 expectedDepositedAmout=dscengine.getTokenAmountFromUsd(weth, collateralValueInUsd); 
+     
+     assertEq(0,totalDscMinted);
+     assertEq(amountCollateral,  expectedDepositedAmout);
+
+
+}
+
+
 }

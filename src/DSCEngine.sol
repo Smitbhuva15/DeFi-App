@@ -17,7 +17,6 @@ contract DSCEngine {
     error DSCEngine__MintFailed();
     error DSCEngine__HealthFactorOk();
     error DSCEngine__HealthFactorNotImproved();
-    
 
     DecentralizedStableCoin private immutable i_dsc;
 
@@ -59,7 +58,7 @@ contract DSCEngine {
         address indexed redeemTo,
         address token,
         uint256 amount
-    ); 
+    );
     // if redeemFrom != redeemedTo, then it was liquidated
 
     //////////////////////////////////////////////  modifier   ///////////////////////////////////////////
@@ -165,8 +164,12 @@ contract DSCEngine {
         address redeemCollateralAddress,
         uint256 amountToRedeemCollatral
     ) public moreThanZero(amountToRedeemCollatral) {
-      
-       _redeemCollateral(msg.sender,msg.sender,redeemCollateralAddress,amountToRedeemCollatral);
+        _redeemCollateral(
+            msg.sender,
+            msg.sender,
+            redeemCollateralAddress,
+            amountToRedeemCollatral
+        );
 
         revertIfHealthFactorIsBroken(msg.sender);
     }
@@ -174,7 +177,7 @@ contract DSCEngine {
     function burnDsc(
         uint256 amountDscToBurn
     ) public moreThanZero(amountDscToBurn) {
-        _burnDsc(amountDscToBurn,msg.sender,msg.sender);
+        _burnDsc(amountDscToBurn, msg.sender, msg.sender);
         revertIfHealthFactorIsBroken(msg.sender); // never possible
     }
 
@@ -200,21 +203,25 @@ contract DSCEngine {
         uint256 bounscollateral = (tokenAmountFromDebtCovered *
             LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
 
-        uint256 totalCollateralWithBonus = tokenAmountFromDebtCovered + bounscollateral;
+        uint256 totalCollateralWithBonus = tokenAmountFromDebtCovered +
+            bounscollateral;
 
-        _redeemCollateral(user,msg.sender,collateralAddress,totalCollateralWithBonus);
+        _redeemCollateral(
+            user,
+            msg.sender,
+            collateralAddress,
+            totalCollateralWithBonus
+        );
 
-        _burnDsc(debtToCover, user,msg.sender);
+        _burnDsc(debtToCover, user, msg.sender);
 
         uint256 endingUserhealthFactor = _healthFactor(user);
 
-        if(endingUserhealthFactor<=startingUserhealthFactor){
+        if (endingUserhealthFactor <= startingUserhealthFactor) {
             revert DSCEngine__HealthFactorNotImproved();
-
         }
 
         revertIfHealthFactorIsBroken(msg.sender);
-
     }
 
     function getMinHealthFactor() external {}
@@ -229,7 +236,14 @@ contract DSCEngine {
         }
     }
 
+    function getAccountInfo(
+        address user
+    ) external view returns (uint256, uint256) {
+        uint256 totalDscMinted = s_DSCMinted[user];
+        uint256 collateralValueInUsd = getAccountCollateralValue(user);
 
+        return (totalDscMinted, collateralValueInUsd);
+    }
 
     ///////////////////////////////////////// Private & Internal View & Pure Functions  ///////////////////////////////////////////
 
@@ -256,12 +270,20 @@ contract DSCEngine {
         }
     }
 
-    function _burnDsc(uint256 amountToBurnDsc,address onBehalfOf, address dscFromThisUserAccount) internal {
-        s_DSCMinted[onBehalfOf]-=amountToBurnDsc;
+    function _burnDsc(
+        uint256 amountToBurnDsc,
+        address onBehalfOf,
+        address dscFromThisUserAccount
+    ) internal {
+        s_DSCMinted[onBehalfOf] -= amountToBurnDsc;
 
-        (bool success)=i_dsc.transferFrom(dscFromThisUserAccount,address(this),amountToBurnDsc);
+        bool success = i_dsc.transferFrom(
+            dscFromThisUserAccount,
+            address(this),
+            amountToBurnDsc
+        );
 
-        if(!success){
+        if (!success) {
             revert DSCEngine__TransferFailed();
         }
 
