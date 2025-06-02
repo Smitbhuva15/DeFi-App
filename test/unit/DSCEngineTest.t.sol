@@ -22,6 +22,7 @@ contract DSCEngineTest is Test {
     address public USER = makeAddr("user");
 
     uint256 amountCollateral = 10 ether;
+    uint256 amountMinted = 5 ether;
 
     function setUp() external {
         DeployDsc deployer = new DeployDsc();
@@ -120,15 +121,41 @@ contract DSCEngineTest is Test {
         _;
     }
 
-    function testDepositCollateralandGetAccountInfo () depositeCollateral public{
-    (uint256 totalDscMinted, uint256 collateralValueInUsd) = dscengine.getAccountInfo(USER);
-     uint256 expectedDepositedAmout=dscengine.getTokenAmountFromUsd(weth, collateralValueInUsd); 
-     
-     assertEq(0,totalDscMinted);
-     assertEq(amountCollateral,  expectedDepositedAmout);
+    function testDepositCollateralandGetAccountInfo()
+        public
+        depositeCollateral
+    {
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = dscengine
+            .getAccountInfo(USER);
+        uint256 expectedDepositedAmout = dscengine.getTokenAmountFromUsd(
+            weth,
+            collateralValueInUsd
+        );
 
+        assertEq(0, totalDscMinted);
+        assertEq(amountCollateral, expectedDepositedAmout);
+    }
 
-}
+    // function testHelthFactor() public depositeCollateral {
+    //     // (uint256 totalDscMinted, uint256 collateralValueInUsd) = dscengine.getAccountInfo(USER);
+    //     uint256 healthFactor = dscengine._healthFactor(USER);
+    //     uint256 expectedHealthFactor = 1;
+    //     console.log(healthFactor);
 
+    //     assertEq(healthFactor, expectedHealthFactor);
+    // }
 
+    function testCanMintDscSuccessfully() public depositeCollateral {
+        vm.startPrank(USER);
+        dscengine.mintDsc(amountMinted);
+        assertEq(dsc.balanceOf(USER), amountMinted);
+        vm.stopPrank();
+    }
+
+    function testRevertsIfHealthFactorIsBroken() public {
+        vm.startPrank(USER);
+        vm.expectRevert();
+        dscengine.mintDsc(amountMinted);
+        vm.stopPrank();
+    }
 }
