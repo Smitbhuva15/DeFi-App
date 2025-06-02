@@ -23,6 +23,7 @@ contract DSCEngineTest is Test {
 
     uint256 amountCollateral = 10 ether;
     uint256 amountMinted = 5 ether;
+    uint256 amountBurn=15 ether;
 
     function setUp() external {
         DeployDsc deployer = new DeployDsc();
@@ -156,6 +157,32 @@ contract DSCEngineTest is Test {
         vm.startPrank(USER);
         vm.expectRevert();
         dscengine.mintDsc(amountMinted);
+        vm.stopPrank();
+    }
+
+
+    function testBurnRevertsIfBurningMoreThanBalance() public depositeCollateral{
+        vm.startPrank(USER);
+        dscengine.mintDsc(amountMinted);
+
+        vm.expectRevert();
+        dscengine.burnDsc(amountBurn);
+
+        vm.stopPrank();
+
+
+    }
+
+    function testBurnSuccessfully () public depositeCollateral(){
+         vm.startPrank(USER);
+        dscengine.mintDsc(amountMinted);
+
+        dsc.approve(address(dscengine),amountMinted);
+
+        dscengine.burnDsc(amountMinted);
+        
+        assertEq(0,dsc.balanceOf(USER));
+
         vm.stopPrank();
     }
 }
