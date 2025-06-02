@@ -309,6 +309,10 @@ contract DSCEngine {
         uint256 collateralAdjustedForThreshold = (collateralValueInUsd *
             LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
 
+        if (totalDscMinted == 0e18) {
+            return collateralAdjustedForThreshold;
+        }
+
         return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
     }
 
