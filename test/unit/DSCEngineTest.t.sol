@@ -188,10 +188,59 @@ contract DSCEngineTest is Test {
 
     function testredeemCollateralSuccessFully() public depositeCollateral {
         vm.startPrank(USER);
-        dscengine.redeemCollateral(weth,amountMinted);
+        dscengine.redeemCollateral(weth, amountMinted);
         vm.stopPrank();
     }
 
+    function testgetPrecision() public view {
+        uint256 Precision = dscengine.getPrecision();
+        assertEq(1e18, Precision);
+    }
 
+    function testgetLiquidationThreshold() public view {
+        uint256 LiquidationThreshold = dscengine.getLiquidationThreshold();
+        assertEq(50, LiquidationThreshold);
+    }
 
+    function testgetLiquidationBonus() public view {
+        uint256 LiquidationBonus = dscengine.getLiquidationBonus();
+        assertEq(10, LiquidationBonus);
+    }
+
+    function testgetAdditionalFeedPrecision() public view {
+        uint256 AdditionalFeedPrecision = dscengine
+            .getAdditionalFeedPrecision();
+        assertEq(1e10, AdditionalFeedPrecision);
+    }
+
+    function testgetMinHealthFactor() public view {
+        uint256 MinHealthFactor = dscengine.getMinHealthFactor();
+        assertEq(1e18, MinHealthFactor);
+    }
+
+    //  function testgetCollateralTokens() public view {
+    //    address [] memory CollateralTokens= dscengine.getCollateralTokens();
+    //    address  [] memory expectedCollateralTokens;
+    //    expectedCollateralTokens.push(address(weth));
+    //    expectedCollateralTokens.push(address(wbtc));
+    //    assertEq(expectedCollateralTokens,CollateralTokens);
+    // }
+
+    function testgetDsc() public view {
+        address i_Dsc = dscengine.getDsc();
+        assertEq(address(dsc), i_Dsc);
+    }
+
+    function testgetCollateralTokenPriceFeed() public view {
+        address CollateralTokenPriceFeed = dscengine
+            .getCollateralTokenPriceFeed(weth);
+        assertEq(ethUsdPriceFeed, CollateralTokenPriceFeed);
+    }
+
+    function testgetHealthFactor() public depositeCollateral {
+        vm.startPrank(USER);
+        uint256 HealthFactor = dscengine.getHealthFactor(USER);
+        assertEq(type(uint256).max, HealthFactor);
+        vm.stopPrank();
+    }
 }
