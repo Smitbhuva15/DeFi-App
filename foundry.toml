@@ -9,7 +9,7 @@ remappings = [
 ]
 
 [invariant]
-run =128
+runs =128
 depth =128
 fail_on_revret=true
 

@@ -315,7 +315,7 @@ contract DSCEngine {
     function calculateHealthFactor(
         uint256 totalDscMinted,
         uint256 collateralValueInUsd
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         uint256 collateralAdjustedForThreshold = (collateralValueInUsd *
             LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
 
