@@ -411,6 +411,13 @@ contract DSCEngine {
         return _healthFactor(user);
     }
 
+    function getUserCollateralBalance(
+        address user,
+        address collateralToken
+    ) external view returns (uint256) {
+        return s_collateralDeposited[user][collateralToken];
+    }
+
 }
 
 
