@@ -1,66 +1,61 @@
-## Foundry
+# Foundry DeFi Stablecoin
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+<br>
 
-Foundry consists of:
+ ## Stablecoin
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+ - A stablecoin is a digital token whose price stays stable (doesn't go up/down wildly like Bitcoin or Ethereum).
 
-## Documentation
+ ### 🔗 Why Are They Used?
 
-https://book.getfoundry.sh/
 
-## Usage
+🔄 Acts as a medium of exchange without volatility.
 
-### Build
+🛒 Used for buying goods/services with crypto.
 
-```shell
-$ forge build
-```
+📉 Helpful in DeFi apps for lending/borrowing without risk of big price swings.
 
-### Test
+<br>
 
-```shell
-$ forge test
-```
+## 💸 What is a DeFi App?
 
-### Format
+DeFi (Decentralized Finance) app is a smart contract-based financial app built on blockchain (like Ethereum), with no middlemen like banks.
 
-```shell
-$ forge fmt
-```
+**It lets users:**
 
-### Gas Snapshots
+- 🚀 Lend and borrow crypto
 
-```shell
-$ forge snapshot
-```
+- 💰 Earn interest
 
-### Anvil
+- 🪙 Mint or burn stablecoins
 
-```shell
-$ anvil
-```
+- ⚖️ Trade tokens directly
 
-### Deploy
+- 💎 Provide liquidity
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+ ✅ Everything is automated using smart contracts.
 
-### Cast
+ <br>
 
-```shell
-$ cast <subcommand>
-```
+ ## 🪙 Minting a Coin (Token Minting)
 
-### Help
+**Minting refers to the process of creating new tokens and adding them to the total supply, typically in exchange for depositing collateral or fulfilling some predefined condition in a smart contract.**
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+- Example in DeFi: When a user deposits ETH into a vault, the protocol mints new stablecoins (e.g. DAI or DSC) and gives them to the user.
+
+<br>
+
+## 🔥 Burning a Coin (Token Burning)
+
+**Burning refers to the process of permanently removing tokens from circulation, reducing the total supply. This is usually done by sending tokens to an unspendable address or calling a burn function.**
+
+- Example in DeFi: A user returns (repays) stablecoins to the protocol, which then burns them and unlocks the collateral.
+
+<br>
+
+## ⚠️ Liquidation
+
+**Liquidation is the process of forcibly selling or seizing a user's collateral when the value of their collateral falls below a required threshold, in order to maintain the stability and solvency of the system.**
+
+- Example in DeFi: If the price of ETH drops and a user's loan is undercollateralized, the protocol allows others to repay part of their debt and receive their ETH at a discount.
+
