@@ -56,9 +56,10 @@ contract InvariantHandler is Test {
         if (collateralAmount == 0) {
             return;
         }
-        vm.prank(msg.sender);
+        vm.startPrank(msg.sender);
         dscengine.redeemCollateral(address(collateral), collateralAmount);
     }
+
 
     function getCollateraladdress(
         uint256 collateralIndex
@@ -68,5 +69,22 @@ contract InvariantHandler is Test {
         }
 
         return address(wbtc);
+    }
+
+    function mintDsc(uint256  amount) public{
+       vm.startPrank(msg.sender);
+      (uint256 totalDscMinted, uint256 collateralValueInUsd)= dscengine._getAccountInformation(msg.sender);
+      uint256 maxDscMintable =(collateralValueInUsd/2)-totalDscMinted;
+      if(maxDscMintable < 0){
+        return;
+      }
+      amount=bound(amount,0,uint256(maxDscMintable));
+        if(amount == 0){
+            return;
+        }
+        dscengine.mintDsc(amount);
+
+       vm.stopPrank();
+        
     }
 }

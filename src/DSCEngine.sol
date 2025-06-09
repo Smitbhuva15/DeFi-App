@@ -293,7 +293,7 @@ contract DSCEngine {
     function _getAccountInformation(
         address user
     )
-        private
+        public
         view
         returns (uint256 totalDscMinted, uint256 collateralValueInUsd)
     {
