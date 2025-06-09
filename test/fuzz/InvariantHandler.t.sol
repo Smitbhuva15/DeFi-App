@@ -13,6 +13,8 @@ contract InvariantHandler is Test {
     ERC20Mock public wbtc;
 
     uint96 public constant MAX_UINT = type(uint96).max;
+    
+    address [] public depositedCollateraladdresses;
 
     constructor(DSCEngine _dscengine, DecentralizedStableCoin _dsc) {
         dscengine = _dscengine;
@@ -39,7 +41,7 @@ contract InvariantHandler is Test {
             address(dscengine),
             collateralAmount
         );
-
+         depositedCollateraladdresses.push(colleteralAddress);
         dscengine.depositCollateral(colleteralAddress, collateralAmount);
         vm.stopPrank();
     }
@@ -71,17 +73,24 @@ contract InvariantHandler is Test {
         return address(wbtc);
     }
 
-    function mintDsc(uint256  amount) public{
-       vm.startPrank(msg.sender);
-      (uint256 totalDscMinted, uint256 collateralValueInUsd)= dscengine._getAccountInformation(msg.sender);
+    function mintDsc(uint256  amount,uint256 depositedCollateraladdressesindex) public{
+        if(depositedCollateraladdressesindex==0){
+            return;
+        }
+        address sender=depositedCollateraladdresses[depositedCollateraladdressesindex % depositedCollateraladdresses.length];
+       vm.startPrank(sender);
+      (uint256 totalDscMinted, uint256 collateralValueInUsd)= dscengine._getAccountInformation(sender);
       uint256 maxDscMintable =(collateralValueInUsd/2)-totalDscMinted;
+
       if(maxDscMintable < 0){
         return;
       }
       amount=bound(amount,0,uint256(maxDscMintable));
+
         if(amount == 0){
             return;
         }
+
         dscengine.mintDsc(amount);
 
        vm.stopPrank();
