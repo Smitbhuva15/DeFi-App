@@ -45,4 +45,15 @@ contract InvariantTest is StdInvariant, Test {
 
         assert(wethValue + wbtcValue >= totalSupply);
     }
+
+    function invariant_gettersCantRevert() public view {
+        dscengine.getAdditionalFeedPrecision();
+        dscengine.getCollateralTokens();
+        dscengine.getLiquidationBonus();
+        dscengine.getLiquidationThreshold();
+        dscengine.getMinHealthFactor();
+        dscengine.getPrecision();
+        dscengine.getDsc();
+
+    }
 }
