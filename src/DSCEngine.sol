@@ -5,6 +5,7 @@ pragma solidity ^0.8.18;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {OracleLib} from "./libraries/OracleLib.sol";
 
 contract DSCEngine {
     //////////////////////////////////////         errors       ///////////////////////////////////////////////
@@ -19,6 +20,10 @@ contract DSCEngine {
     error DSCEngine__HealthFactorNotImproved();
 
     DecentralizedStableCoin private immutable i_dsc;
+
+
+    // We use the OracleLib to check for stale prices
+    using OracleLib for AggregatorV3Interface;
 
     uint256 private constant LIQUIDATION_THRESHOLD = 50; // This means you need to be 200% over-collateralized
     uint256 private constant LIQUIDATION_BONUS = 10; //  meThisans you get assets at a 10% discount when liquidating
@@ -333,7 +338,7 @@ contract DSCEngine {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(
             s_priceFeeds[token]
         );
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 price, , , ) = priceFeed.staleCheckLatestRoundData();
 
         // $1000 USD Debt
         // 1 ETH = 2000 USD
@@ -352,7 +357,7 @@ contract DSCEngine {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(
             s_priceFeeds[token]
         );
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 price, , , ) = priceFeed.staleCheckLatestRoundData();
 
         return
             ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;

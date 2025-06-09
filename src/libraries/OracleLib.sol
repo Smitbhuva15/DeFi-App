@@ -16,7 +16,7 @@ library OracleLib {
 
     function staleCheckLatestRoundData(
         AggregatorV3Interface priceFeed
-    ) public returns (uint80, int256, uint256, uint256, uint80) {
+    ) public view returns (uint80, int256, uint256, uint256, uint80) {
         (
             uint80 roundId,
             int256 price,
